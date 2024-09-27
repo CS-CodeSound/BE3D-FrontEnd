@@ -1,7 +1,12 @@
 #include "ReadWriteJson.h"
 #include "ReadWriteFile.h"
 #include "Serialization/JsonSerializer.h" // Json
+#include "Engine/DataTable.h" // Include DataTable support
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "PackageHelperFunctions.h" 
+
 #include "JsonObjectConverter.h" // JsonUtilities
+
 
 FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage)
 {
@@ -14,18 +19,264 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
     FBE3DTestStruct RetBE3DTestStruct;
 
-    // Try to convert generic json object to the desired structure
-    if (!FJsonObjectConverter::JsonObjectToUStruct<FBE3DTestStruct>(JsonObject.ToSharedRef(), &RetBE3DTestStruct))
+    // Create DataTables for each struct
+    UDataTable* CategoryDataTable = NewObject<UDataTable>();
+    UDataTable* TickerDataTable = NewObject<UDataTable>();
+    UDataTable* Pt13fDataTable = NewObject<UDataTable>();
+    UDataTable* CompanyInfoDataTable = NewObject<UDataTable>();
+
+    CategoryDataTable->RowStruct = FCategoryDataList::StaticStruct();
+    TickerDataTable->RowStruct = FTickerData::StaticStruct();
+    Pt13fDataTable->RowStruct = FPt13fData::StaticStruct();
+    CompanyInfoDataTable->RowStruct = FCompanyInfo::StaticStruct();
+
+    // Process categories and add to DataTable
+    const TSharedPtr<FJsonObject>* Categories;
+    if (JsonObject->TryGetObjectField(TEXT("categories"), Categories))
     {
-        bOutSuccess = false;
-        OutInfoMessage = FString::Printf(TEXT("Read Struct Json Failed - Was not able to convert the json object to your desired structure. Is it the right format / struct? - '%s'"), *JsonFilePath);
-        return FBE3DTestStruct();
+        for (const auto& Category : Categories->Get()->Values)
+        {
+            const FString CategoryName = Category.Key;
+            const TArray<TSharedPtr<FJsonValue>> CategoryArray = Category.Value->AsArray();
+
+            FCategoryDataList CategoryDataList;
+
+            // Process each ticker in the category
+            for (const auto& Item : CategoryArray)
+            {
+                const TSharedPtr<FJsonObject> TickerObject = Item->AsObject();
+                if (TickerObject.IsValid())
+                {
+                    FCategoryData CategoryData;
+                    CategoryData.Ticker = TickerObject->GetStringField(TEXT("ticker"));
+                    CategoryData.Year = TickerObject->GetNumberField(TEXT("year"));
+                    CategoryData.Quarter = TickerObject->GetNumberField(TEXT("quarter"));
+
+                    CategoryDataList.CategoryDataArray.Add(CategoryData);
+                }
+            }
+
+            // Add to RetBE3DTestStruct
+            RetBE3DTestStruct.Categories.Add(CategoryName, CategoryDataList);
+
+            // Add CategoryDataList to CategoryDataTable
+            CategoryDataTable->AddRow(FName(*CategoryName), CategoryDataList);
+        }
     }
+
+    // Process tickers and add to DataTable
+    const TSharedPtr<FJsonObject>* Tickers;
+    if (JsonObject->TryGetObjectField(TEXT("tickers"), Tickers))
+    {
+        for (const auto& Ticker : Tickers->Get()->Values)
+        {
+            const FString TickerName = Ticker.Key;
+            const TSharedPtr<FJsonObject> TickerObject = Ticker.Value->AsObject();
+
+            if (TickerObject.IsValid())
+            {
+                FTickerData TickerData;
+
+                // Process earnings
+                const TArray<TSharedPtr<FJsonValue>> EarningsArray = TickerObject->GetArrayField(TEXT("earnings"));
+                for (const auto& EarningsItem : EarningsArray)
+                {
+                    const TSharedPtr<FJsonObject> EarningsObject = EarningsItem->AsObject();
+                    if (EarningsObject.IsValid())
+                    {
+                        FEarningsData EarningsData;
+                        EarningsData.Date = EarningsObject->GetStringField(TEXT("date"));
+                        EarningsData.EPS = EarningsObject->GetStringField(TEXT("eps"));
+                        EarningsData.Revenue = EarningsObject->GetStringField(TEXT("revenue"));
+
+                        TickerData.Earnings.Add(EarningsData);
+                    }
+                }
+
+                // Process ratings
+                const TArray<TSharedPtr<FJsonValue>> RatingsArray = TickerObject->GetArrayField(TEXT("ratings"));
+                for (const auto& RatingItem : RatingsArray)
+                {
+                    const TSharedPtr<FJsonObject> RatingObject = RatingItem->AsObject();
+                    if (RatingObject.IsValid())
+                    {
+                        FRatingData RatingData;
+                        RatingData.Date = RatingObject->GetStringField(TEXT("date"));
+                        RatingData.Analyst = RatingObject->GetStringField(TEXT("analyst"));
+                        RatingData.RatingCurrent = RatingObject->GetStringField(TEXT("rating_current"));
+                        RatingData.RatingPrior = RatingObject->GetStringField(TEXT("rating_prior"));
+
+                        TickerData.Ratings.Add(RatingData);
+                    }
+                }
+
+                RetBE3DTestStruct.Tickers.Add(TickerName, TickerData);
+
+                // Add TickerData to TickerDataTable
+                TickerDataTable->AddRow(FName(*TickerName), TickerData);
+            }
+        }
+    }
+
+    // Process Pt13f data
+    const TSharedPtr<FJsonObject>* Pt13fDataObject;
+    if (JsonObject->TryGetObjectField(TEXT("pt_13f"), Pt13fDataObject))
+    {
+        for (const auto& IdPair : Pt13fDataObject->Get()->Values)
+        {
+            const FString IdKey = IdPair.Key;
+            const TArray<TSharedPtr<FJsonValue>>& DataArray = IdPair.Value->AsArray();
+
+            // Create a new FPt13fDataWrapper for this IdKey
+            FPt13fDataWrapper DataWrapper;
+
+            for (const auto& Item : DataArray)
+            {
+                const TSharedPtr<FJsonObject> Pt13fObject = Item->AsObject();
+                if (Pt13fObject.IsValid())
+                {
+                    FPt13fData Pt13fData;
+                    Pt13fData.ID = Pt13fObject->GetNumberField(TEXT("id"));
+                    Pt13fData.PubDate = Pt13fObject->GetStringField(TEXT("pubDate"));
+
+                    // Add the Pt13fData to the DataArray of DataWrapper
+                    DataWrapper.DataArray.Add(Pt13fData);
+                }
+            }
+
+            // Ensure PT13FData is of type FPt13fDataList
+            FPt13fDataList NewPt13fDataList;
+            NewPt13fDataList.Pt13fDataMap.Add(IdKey, DataWrapper);
+
+            // Add NewPt13fDataList to PT13FData
+            RetBE3DTestStruct.PT13FData.Add(IdKey, NewPt13fDataList);
+        }
+    }
+
+    // Process company info and add to DataTable
+    const TArray<TSharedPtr<FJsonValue>>* CompanyInfoArray;
+    if (JsonObject->TryGetArrayField(TEXT("company_info"), CompanyInfoArray))
+    {
+        for (const auto& Item : *CompanyInfoArray)
+        {
+            const TSharedPtr<FJsonObject> CompanyInfoObject = Item->AsObject();
+            if (CompanyInfoObject.IsValid())
+            {
+                FCompanyInfo NewCompanyInfo;
+                NewCompanyInfo.Ticker = CompanyInfoObject->GetStringField(TEXT("ticker"));
+                NewCompanyInfo.Company = CompanyInfoObject->GetStringField(TEXT("company"));
+
+                RetBE3DTestStruct.CompanyInfo.Add(NewCompanyInfo);
+
+                // Add CompanyInfo to CompanyInfoDataTable
+                CompanyInfoDataTable->AddRow(FName(*NewCompanyInfo.Ticker), NewCompanyInfo);
+            }
+        }
+    }
+
+    /*
+    // Save DataTables
+    FString DataTablePath = TEXT("/Game/MainLevel/Datatable");
+
+    // Ensure each DataTable is valid before saving
+    if (CategoryDataTable)
+    {
+        SaveDataTableToAsset(CategoryDataTable, DataTablePath + TEXT("/CategoryDataTable"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CategoryDataTable is null. Cannot save."));
+    }
+
+    if (TickerDataTable)
+    {
+        SaveDataTableToAsset(TickerDataTable, DataTablePath + TEXT("/TickerDataTable"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("TickerDataTable is null. Cannot save."));
+    }
+
+    if (Pt13fDataTable)
+    {
+        SaveDataTableToAsset(Pt13fDataTable, DataTablePath + TEXT("/Pt13fDataTable"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Pt13fDataTable is null. Cannot save."));
+    }
+
+    if (CompanyInfoDataTable)
+    {
+        SaveDataTableToAsset(CompanyInfoDataTable, DataTablePath + TEXT("/CompanyInfoDataTable"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CompanyInfoDataTable is null. Cannot save."));
+    }
+
+    */
 
     bOutSuccess = true;
     OutInfoMessage = FString::Printf(TEXT("Read Struct Json Succeeded - '%s'"), *JsonFilePath);
     return RetBE3DTestStruct;
 }
+
+// Function to save DataTable as an asset
+void UReadWriteJson::SaveDataTableToAsset(UDataTable* DataTable, FString Path)
+{
+    if (!DataTable)
+    {
+        UE_LOG(LogTemp, Error, TEXT("DataTable is null. Cannot save."));
+        return;
+    }
+
+    // Create an Asset Reference
+    FStringAssetReference AssetRef(Path);
+    UObject* Asset = Cast<UObject>(StaticLoadObject(UObject::StaticClass(), nullptr, *AssetRef.ToString()));
+    UPackage* Package = nullptr;
+
+    // Check if the asset already exists
+    if (Asset)
+    {
+        Package = Asset->GetOutermost();
+    }
+    else
+    {
+        // Create a new package if it does not exist
+        Package = CreatePackage(*Path);
+        if (!Package || Package->IsUnreachable())
+        {
+            UE_LOG(LogTemp, Error, TEXT("Package is invalid or unreachable: %s"), *Path);
+            return;
+        }
+
+    }
+
+    // Mark the DataTable as created and dirty
+    FAssetRegistryModule::AssetCreated(DataTable);
+    DataTable->MarkPackageDirty();
+
+    // Check if the package name is valid
+    if (FPackageName::IsValidLongPackageName(Path))
+    {
+        // Convert path to filename
+        FString Filename = FPackageName::LongPackageNameToFilename(Path, TEXT(".uasset"));
+
+        // Save the package
+        const bool bSuccess = UPackage::SavePackage(Package, DataTable, EObjectFlags::RF_Public | EObjectFlags::RF_Standalone, *Filename);
+
+        if (!bSuccess)
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to save package for path: %s"), *Path);
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Invalid package name: %s"), *Path);
+    }
+}
+
 
 void UReadWriteJson::WriteStructToJsonFile(FString JsonFilePath, FBE3DTestStruct Struct, bool& bOutSuccess, FString& OutInfoMessage)
 {

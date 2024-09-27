@@ -10,41 +10,42 @@
 
 TMap<FString, FBE3DTestStruct> UReadWriteJsonDataTableFormat::ReadStructFromJsonFile_DataTableFormat(FString FilePath, bool& bOutSuccess, FString& OutInfoMessage)
 {
-	// Read file
-	FString JsonString = UReadWriteFile::ReadStringFromFile(FilePath, bOutSuccess, OutInfoMessage);
-	if (!bOutSuccess)
-	{
-		return TMap<FString, FBE3DTestStruct>();
-	}
+    // Read file
+    FString JsonString = UReadWriteFile::ReadStringFromFile(FilePath, bOutSuccess, OutInfoMessage);
+    if (!bOutSuccess)
+    {
+        return TMap<FString, FBE3DTestStruct>();
+    }
 
-	// Create data table and tell it which struct it's using
-	UDataTable* Table = NewObject<UDataTable>();
-	Table->RowStruct = FBE3DTestStruct::StaticStruct();
+    // Create data table and tell it which struct it's using
+    UDataTable* Table = NewObject<UDataTable>();
+    Table->RowStruct = FBE3DTestStruct::StaticStruct();
 
-	// Populate data table
-	Table->CreateTableFromJSONString(JsonString);
+    // Populate data table
+    Table->CreateTableFromJSONString(JsonString);
 
-	// Retrieve the rows
-	TArray<FName> RowNames = Table->GetRowNames();
+    // Retrieve the rows
+    TArray<FName> RowNames = Table->GetRowNames();
 
-	// Populate the return map
-	TMap<FString, FBE3DTestStruct> RowsToStruct;
+    // Populate the return map
+    TMap<FString, FBE3DTestStruct> RowsToStruct;
 
-	for (FName RowName : RowNames)
-	{
-		FBE3DTestStruct* Row = Table->FindRow<FBE3DTestStruct>(RowName, nullptr);
+    for (FName RowName : RowNames)
+    {
+        FBE3DTestStruct* Row = Table->FindRow<FBE3DTestStruct>(RowName, nullptr);
 
-		if (Row != nullptr)
-		{
-			RowsToStruct.Add(RowName.ToString(), *Row);
-		}
-	}
+        if (Row != nullptr)
+        {
+            RowsToStruct.Add(RowName.ToString(), *Row);
+        }
+    }
 
-	// Return the rows
-	bOutSuccess = true;
-	OutInfoMessage = FString::Printf(TEXT("Read Data Table Json Succeeded - '%s'"), *FilePath);
-	return RowsToStruct;
+    // Return the rows
+    bOutSuccess = true;
+    OutInfoMessage = FString::Printf(TEXT("Read Data Table Json Succeeded - '%s'"), *FilePath);
+    return RowsToStruct;
 }
+
 
 
 void UReadWriteJsonDataTableFormat::WriteStructToJsonFile_DataTableFormat(FString FilePath, TMap<FString, FBE3DTestStruct> RowsToStruct, bool& bOutSuccess, FString& OutInfoMessage)

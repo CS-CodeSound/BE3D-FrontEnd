@@ -42,12 +42,17 @@
 			]
 		},
 		{
-			"Name": "DataCharts",
+			"Name": "ModelingToolsEditorMode",
 			"Enabled": true
 		},
 		{
 			"Name": "DataCharts",
 			"Enabled": true
+		},
+		{
+			"Name": "MySQL",
+			"Enabled": false,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/4a497572d1014beab577112d5a37c813"
 		}
 	],
 	"TargetPlatforms": [
