@@ -7,9 +7,22 @@
 
 #include "JsonObjectConverter.h" // JsonUtilities
 
+UReadWriteJson* UReadWriteJson::Instance = nullptr;
+
+UReadWriteJson* UReadWriteJson::GetInstance()
+{
+    if (Instance == nullptr)
+    {
+        Instance = NewObject<UReadWriteJson>();
+        Instance->AddToRoot(); // Prevent garbage collection
+    }
+    return Instance;
+}
 
 FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage)
 {
+    UReadWriteJson* instance = GetInstance();
+
     // Try to read generic json object from file
     TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonFilePath, bOutSuccess, OutInfoMessage);
     if (!bOutSuccess)
@@ -29,6 +42,8 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
     TickerDataTable->RowStruct = FTickerData::StaticStruct();
     Pt13fDataTable->RowStruct = FPt13fData::StaticStruct();
     CompanyInfoDataTable->RowStruct = FCompanyInfo::StaticStruct();
+
+    FDataTablesWrapper DataTablesWrapper;
 
     // Process categories and add to DataTable
     const TSharedPtr<FJsonObject>* Categories;
@@ -77,6 +92,12 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
             {
                 FTickerData TickerData;
 
+                UDataTable* EarningsDataTable = NewObject<UDataTable>();
+                EarningsDataTable->RowStruct = FEarningsData::StaticStruct();
+
+                UDataTable* PricesDataTable = NewObject<UDataTable>();
+                PricesDataTable->RowStruct = FPriceData::StaticStruct();
+
                 // Process earnings
                 const TArray<TSharedPtr<FJsonValue>> EarningsArray = TickerObject->GetArrayField(TEXT("earnings"));
                 for (const auto& EarningsItem : EarningsArray)
@@ -90,6 +111,15 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         EarningsData.Revenue = EarningsObject->GetStringField(TEXT("revenue"));
 
                         TickerData.Earnings.Add(EarningsData);
+
+                        if (!EarningsDataTable->GetRowMap().Contains(FName(*EarningsData.Date)))
+                        {
+                            TickerData.Earnings.Add(EarningsData);
+                            EarningsDataTable->AddRow(FName(*EarningsData.Date), EarningsData);
+                        }
+
+                        UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"),
+                            *TickerName, *EarningsData.Date, *EarningsData.EPS, *EarningsData.Revenue);
                     }
                 }
 
@@ -137,14 +167,35 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         }
 
                         TickerData.Prices.Add(PriceData);
+
+                        PricesDataTable->AddRow(FName(*PriceData.Date), PriceData);
                     }
                 }
 
                 RetBE3DTestStruct.Tickers.Add(TickerName, TickerData);
 
-                // Add TickerData to TickerDataTable
-                TickerDataTable->AddRow(FName(*TickerName), TickerData);
+                DataTablesWrapper.EarningsDataTables.Add(TickerName, EarningsDataTable);
+                DataTablesWrapper.PricesDataTables.Add(TickerName, PricesDataTable);
+
+                if (EarningsDataTable)
+                {
+                    if (EarningsDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("EarningsDataTable_%s"), *TickerName);
+                        EarningsDataTable->Rename(*DefaultDataTableName);
+                    }
+
+                    FString DataTableName = EarningsDataTable->GetName();
+                    int32 RowCount = EarningsDataTable->GetRowMap().Num();
+                    UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Earnings DataTable for Ticker: %s, DataTable is null"), *TickerName);
+                }
             }
+
+            RetBE3DTestStruct.DataTables = DataTablesWrapper;
         }
     }
 
@@ -214,6 +265,10 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                 NewCompanyInfo.Nickname = CompanyInfoObject->GetStringField(TEXT("nickname"));
                 NewCompanyInfo.Intro = CompanyInfoObject->GetStringField(TEXT("intro"));
 
+                FString IntroText = CompanyInfoObject->GetStringField(TEXT("intro"));
+                UE_LOG(LogTemp, Log, TEXT("Intro Text: %s"), *IntroText);
+                NewCompanyInfo.Intro = IntroText;
+
                 if (!RetBE3DTestStruct.CompanyInfo.Contains(NewCompanyInfo.Ticker))
                 {
                     RetBE3DTestStruct.CompanyInfo.Add(NewCompanyInfo.Ticker, NewCompanyInfo);
@@ -233,6 +288,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
     OutInfoMessage = FString::Printf(TEXT("Read Struct Json Succeeded - '%s'"), *JsonFilePath);
     return RetBE3DTestStruct;
 }
+
 
 // Function to save DataTable as an asset
 void UReadWriteJson::SaveDataTableToAsset(UDataTable* DataTable, FString Path)
