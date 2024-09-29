@@ -271,18 +271,6 @@ struct FPt13fDataList : public FTableRowBase
     TMap<FString, FPt13fDataWrapper> Pt13fDataMap; // "id_0", "id_1" 등
 };
 
-USTRUCT(BlueprintType)
-struct FDataTablesWrapper
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, UDataTable*> EarningsDataTables;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, UDataTable*> PricesDataTables;
-};
-
 // 최종 구조체 정의
 USTRUCT(BlueprintType)
 struct FBE3DTestStruct : public FTableRowBase
@@ -303,9 +291,6 @@ struct FBE3DTestStruct : public FTableRowBase
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     TMap<FString, FCompanyInfo> CompanyInfo; // 티커를 key로 하는 회사 정보 저장
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FDataTablesWrapper DataTables;
 };
 
 
@@ -363,39 +348,5 @@ public:
     static void WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);
 
     static void SaveDataTableToAsset(UDataTable* DataTable, FString Path);
-
-
-    UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
-    TMap<FString, UDataTable*> EarningsDataTables;
-
-    UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
-    TMap<FString, UDataTable*> PricesDataTables;
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    UDataTable* GetEarningsDataTable(const FString& TickerName) const
-    {
-        UDataTable* const* DataTable = EarningsDataTables.Find(TickerName);
-        return DataTable ? *DataTable : nullptr;
-    }
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    UDataTable* GetPricesDataTable(const FString& TickerName) const
-    {
-        UDataTable* const* DataTable = PricesDataTables.Find(TickerName);
-        return DataTable ? *DataTable : nullptr;
-    }
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    void SetDataTable(const FString& TickerName, UDataTable* EarningsDataTable_, UDataTable* PricesDataTable_)
-    {
-        EarningsDataTables.Add(TickerName, EarningsDataTable_);
-        PricesDataTables.Add(TickerName, PricesDataTable_);
-    }
-
-    UFUNCTION(BlueprintCallable, Category = "BE3D - Read Write Json")
-    static UReadWriteJson* GetInstance();
-
-private:
-    static UReadWriteJson* Instance; // Singleton instance
 
 };

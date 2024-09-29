@@ -52,10 +52,6 @@
 			"SupportedTargetPlatforms": [
 				"Win64"
 			]
-		},
-		{
-			"Name": "DataCharts",
-			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
