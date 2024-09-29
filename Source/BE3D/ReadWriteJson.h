@@ -386,6 +386,35 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category = "DataTable")
+    void SetEarningsDataTable(const FString& TickerName, UDataTable* NewDataTable)
+    {
+        if (NewDataTable != nullptr)
+        {
+            EarningsDataTables.Add(TickerName, NewDataTable);
+            UE_LOG(LogTemp, Log, TEXT("Set Earnings DataTable for Ticker: %s"), *TickerName);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to set Earnings DataTable for Ticker: %s, DataTable is null"), *TickerName);
+        }
+    }
+
+    UFUNCTION(BlueprintCallable, Category = "DataTable")
+    void SetPricesDataTable(const FString& TickerName, UDataTable* NewDataTable)
+    {
+        if (NewDataTable != nullptr)
+        {
+            PricesDataTables.Add(TickerName, NewDataTable);
+            UE_LOG(LogTemp, Log, TEXT("Set Prices DataTable for Ticker: %s"), *TickerName);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to set Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
+        }
+    }
+
+
+    UFUNCTION(BlueprintCallable, Category = "DataTable")
     void SetDataTable(const FString& TickerName, UDataTable* EarningsDataTable_, UDataTable* PricesDataTable_)
     {
         EarningsDataTables.Add(TickerName, EarningsDataTable_);

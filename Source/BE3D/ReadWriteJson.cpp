@@ -169,6 +169,9 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         TickerData.Prices.Add(PriceData);
 
                         PricesDataTable->AddRow(FName(*PriceData.Date), PriceData);
+
+                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"),
+                            *TickerName, *PriceData.Date, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
                 }
 
@@ -192,6 +195,23 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                 else
                 {
                     UE_LOG(LogTemp, Warning, TEXT("Failed to add Earnings DataTable for Ticker: %s, DataTable is null"), *TickerName);
+                }
+
+                if (PricesDataTable)
+                {
+                    if (PricesDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("PricesDataTable_%s"), *TickerName);
+                        PricesDataTable->Rename(*DefaultDataTableName);
+                    }
+
+                    FString PricesDataTableName = PricesDataTable->GetName();
+                    int32 PricesRowCount = PricesDataTable->GetRowMap().Num();
+                    UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
                 }
             }
 
