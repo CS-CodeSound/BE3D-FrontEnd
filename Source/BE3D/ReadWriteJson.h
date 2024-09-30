@@ -33,14 +33,29 @@ struct FEarningsData : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Date;
+    UPROPERTY(BlueprintReadWrite)
+    int32 Year;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString EPS;
+    UPROPERTY(BlueprintReadWrite)
+    int32 Month;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Revenue;
+    UPROPERTY(BlueprintReadWrite)
+    int32 Day;
+
+    UPROPERTY(BlueprintReadWrite)
+    double AdjustedClose;  // Stock price by the quarter
+
+    UPROPERTY(BlueprintReadWrite)
+    float DividendAmount;  // Dividend by the quarter
+
+    UPROPERTY(BlueprintReadWrite)
+    bool GuruHolding;  // Guru holding status
+
+    UPROPERTY(BlueprintReadWrite)
+    FString EPS;  // Earnings per share
+
+    UPROPERTY(BlueprintReadWrite)
+    FString Revenue;  // Revenue
 };
 
 USTRUCT(BlueprintType)
@@ -48,8 +63,14 @@ struct FRatingData : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Date;
+    UPROPERTY(BlueprintReadWrite)
+    int32 Year;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Month;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Day;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     FString Analyst;
@@ -78,8 +99,14 @@ struct FPriceData : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Date;
+    UPROPERTY(BlueprintReadWrite)
+    int32 Year;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Month;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Day;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     double AdjustedClose = 0.0;
@@ -105,47 +132,14 @@ struct FTickerData : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FPt13fData : public FTableRowBase
+struct FGuruPortfolioData
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    int32 ID = 0;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString PubDate;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString LatestUpdate;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Period;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Ticker;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString Name;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    double Value = 0.0;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    double Amount = 0.0;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    float PricePerShare = 0.0f;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    float Percent = 0.0f;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    FString NewOrOld;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    float Diff = 0.0f;
+    // To be filled later when the data is defined
 };
 
+/*
 USTRUCT(BlueprintType)
 struct FPtListData
 {
@@ -205,7 +199,7 @@ struct FPtListData
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 Cnt13f = 0;
 };
-
+*/
 
 USTRUCT(BlueprintType)
 struct FCompanyInfo : public FTableRowBase
@@ -249,30 +243,11 @@ struct FCategoryDataList : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TArray<FCategoryData> CategoryDataArray; // FCategoryData 배열을 포함하는 구조체
+    TArray<FCategoryData> CategoryDataArray; // Array of FCategoryData
 };
 
 USTRUCT(BlueprintType)
-struct FPt13fDataWrapper : public FTableRowBase
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TArray<FPt13fData> DataArray; // Array of FPt13fData
-};
-
-
-USTRUCT(BlueprintType)
-struct FPt13fDataList : public FTableRowBase
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, FPt13fDataWrapper> Pt13fDataMap; // "id_0", "id_1" 등
-};
-
-USTRUCT(BlueprintType)
-struct FDataTablesWrapper
+struct FDataTablesWrapper : public FTableRowBase
 {
     GENERATED_BODY()
 
@@ -289,20 +264,17 @@ struct FBE3DTestStruct : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, FCategoryDataList> Categories; // 카테고리 이름과 그 데이터들을 저장하는 구조체 매핑
+    UPROPERTY(BlueprintReadWrite)
+	TMap<FString, FCategoryDataList> Categories;  // Category names mapping to a list of tickers, years, and quarters
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, FTickerData> Tickers; // 티커별 데이터 저장
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FString, FTickerData> Tickers;  // Ticker names mapping to earnings, ratings, and price data
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, FPt13fDataList> PT13FData; // 테이블 이름과 그 데이터를 저장하는 구조체 매핑
+	UPROPERTY(BlueprintReadWrite)
+	FGuruPortfolioData GuruPortfolio;  // Placeholder for Guru Portfolio information
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TArray<FPtListData> PTList; // PT 리스트 데이터 저장
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
-    TMap<FString, FCompanyInfo> CompanyInfo; // 티커를 key로 하는 회사 정보 저장
+	UPROPERTY(BlueprintReadWrite)
+    TMap<FString, FCompanyInfo> CompanyInfo;  // List of company information
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     FDataTablesWrapper DataTables;
@@ -362,28 +334,12 @@ public:
      */
     static void WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);
 
-    static void SaveDataTableToAsset(UDataTable* DataTable, FString Path);
-
 
     UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
     TMap<FString, UDataTable*> EarningsDataTables;
 
     UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
     TMap<FString, UDataTable*> PricesDataTables;
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    UDataTable* GetEarningsDataTable(const FString& TickerName) const
-    {
-        UDataTable* const* DataTable = EarningsDataTables.Find(TickerName);
-        return DataTable ? *DataTable : nullptr;
-    }
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    UDataTable* GetPricesDataTable(const FString& TickerName) const
-    {
-        UDataTable* const* DataTable = PricesDataTables.Find(TickerName);
-        return DataTable ? *DataTable : nullptr;
-    }
 
     UFUNCTION(BlueprintCallable, Category = "DataTable")
     void SetEarningsDataTable(const FString& TickerName, UDataTable* NewDataTable)
@@ -411,14 +367,6 @@ public:
         {
             UE_LOG(LogTemp, Warning, TEXT("Failed to set Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
         }
-    }
-
-
-    UFUNCTION(BlueprintCallable, Category = "DataTable")
-    void SetDataTable(const FString& TickerName, UDataTable* EarningsDataTable_, UDataTable* PricesDataTable_)
-    {
-        EarningsDataTables.Add(TickerName, EarningsDataTable_);
-        PricesDataTables.Add(TickerName, PricesDataTable_);
     }
 
     UFUNCTION(BlueprintCallable, Category = "BE3D - Read Write Json")
