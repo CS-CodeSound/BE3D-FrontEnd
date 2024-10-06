@@ -11,8 +11,9 @@ public class BE3D : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore",
 			"Json", "JsonUtilities",
             "AssetTools", "UnrealEd",
-            "AssetRegistry"
-		});
+            "AssetRegistry",
+            "Http"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

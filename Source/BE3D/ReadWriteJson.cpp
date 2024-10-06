@@ -253,6 +253,14 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                 NewCompanyInfo.CompanyKor = CompanyInfoObject->GetStringField(TEXT("companyKor"));
                 NewCompanyInfo.Nickname = CompanyInfoObject->GetStringField(TEXT("nickname"));
 
+                FString CompanyText = NewCompanyInfo.Company;
+
+                if (CompanyText.Len() > 20)
+                {
+                    CompanyText = CompanyText.Left(20) + TEXT("...");
+                }
+                NewCompanyInfo.Company = CompanyText;
+
                 FString IntroText = CompanyInfoObject->GetStringField(TEXT("intro"));
 
                 if (!IntroText.IsEmpty())
