@@ -7,9 +7,22 @@
 
 #include "JsonObjectConverter.h" // JsonUtilities
 
+UReadWriteJson* UReadWriteJson::Instance = nullptr;
+
+UReadWriteJson* UReadWriteJson::GetInstance()
+{
+    if (Instance == nullptr)
+    {
+        Instance = NewObject<UReadWriteJson>();
+        Instance->AddToRoot(); // Prevent garbage collection
+    }
+    return Instance;
+}
 
 FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage)
 {
+    UReadWriteJson* instance = GetInstance();
+
     // Try to read generic json object from file
     TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonFilePath, bOutSuccess, OutInfoMessage);
     if (!bOutSuccess)
@@ -22,13 +35,13 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
     // Create DataTables for each struct
     UDataTable* CategoryDataTable = NewObject<UDataTable>();
     UDataTable* TickerDataTable = NewObject<UDataTable>();
-    UDataTable* Pt13fDataTable = NewObject<UDataTable>();
     UDataTable* CompanyInfoDataTable = NewObject<UDataTable>();
 
     CategoryDataTable->RowStruct = FCategoryDataList::StaticStruct();
     TickerDataTable->RowStruct = FTickerData::StaticStruct();
-    Pt13fDataTable->RowStruct = FPt13fData::StaticStruct();
     CompanyInfoDataTable->RowStruct = FCompanyInfo::StaticStruct();
+
+    FDataTablesWrapper DataTablesWrapper;
 
     // Process categories and add to DataTable
     const TSharedPtr<FJsonObject>* Categories;
@@ -77,6 +90,12 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
             {
                 FTickerData TickerData;
 
+                UDataTable* EarningsDataTable = NewObject<UDataTable>();
+                EarningsDataTable->RowStruct = FEarningsData::StaticStruct();
+
+                UDataTable* PricesDataTable = NewObject<UDataTable>();
+                PricesDataTable->RowStruct = FPriceData::StaticStruct();
+
                 // Process earnings
                 const TArray<TSharedPtr<FJsonValue>> EarningsArray = TickerObject->GetArrayField(TEXT("earnings"));
                 for (const auto& EarningsItem : EarningsArray)
@@ -85,11 +104,28 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                     if (EarningsObject.IsValid())
                     {
                         FEarningsData EarningsData;
-                        EarningsData.Date = EarningsObject->GetStringField(TEXT("date"));
+                        EarningsData.Year = EarningsObject->GetNumberField(TEXT("year"));
+                        EarningsData.Month = EarningsObject->GetNumberField(TEXT("month"));
+                        EarningsData.Day = EarningsObject->GetNumberField(TEXT("day"));
+                        EarningsData.AdjustedClose = EarningsObject->GetNumberField(TEXT("adjusted_close"));
+                        EarningsData.DividendAmount = EarningsObject->GetNumberField(TEXT("dividend_amount"));
                         EarningsData.EPS = EarningsObject->GetStringField(TEXT("eps"));
                         EarningsData.Revenue = EarningsObject->GetStringField(TEXT("revenue"));
 
                         TickerData.Earnings.Add(EarningsData);
+
+                        // Generate a unique row name using year, month, and day
+                        FString DateString = FString::Printf(TEXT("%04d-%02d-%02d"), EarningsData.Year, EarningsData.Month, EarningsData.Day);
+                        FName RowName = FName(*DateString);
+
+                        // Check if the row already exists using the generated date as the row name
+                        if (!EarningsDataTable->GetRowMap().Contains(RowName))
+                        {
+                            EarningsDataTable->AddRow(RowName, EarningsData);
+                        }
+
+                        UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"),
+                            *TickerName, *DateString, *EarningsData.EPS, *EarningsData.Revenue);
                     }
                 }
 
@@ -101,7 +137,9 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                     if (RatingObject.IsValid())
                     {
                         FRatingData RatingData;
-                        RatingData.Date = RatingObject->GetStringField(TEXT("date"));
+                        RatingData.Year = RatingObject->GetNumberField(TEXT("year"));
+                        RatingData.Month = RatingObject->GetNumberField(TEXT("month"));
+                        RatingData.Day = RatingObject->GetNumberField(TEXT("day"));
                         RatingData.Analyst = RatingObject->GetStringField(TEXT("analyst"));
                         RatingData.RatingCurrent = RatingObject->GetStringField(TEXT("rating_current"));
                         RatingData.RatingPrior = RatingObject->GetStringField(TEXT("rating_prior"));
@@ -122,7 +160,9 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                     if (PriceObject.IsValid())
                     {
                         FPriceData PriceData;
-                        PriceData.Date = PriceObject->GetStringField(TEXT("date"));
+                        PriceData.Year = PriceObject->GetNumberField(TEXT("year"));
+                        PriceData.Month = PriceObject->GetNumberField(TEXT("month"));
+                        PriceData.Day = PriceObject->GetNumberField(TEXT("day"));
 
                         // Ensure AdjustedClose field exists and is valid (double)
                         if (PriceObject->HasField(TEXT("adjusted_close")))
@@ -137,59 +177,59 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         }
 
                         TickerData.Prices.Add(PriceData);
+
+                        // Generate a unique row name using year, month, and day
+                        FString DateString = FString::Printf(TEXT("%04d-%02d-%02d"), PriceData.Year, PriceData.Month, PriceData.Day);
+                        FName RowName = FName(*DateString);
+
+                        PricesDataTable->AddRow(RowName, PriceData);
+
+                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"),
+                            *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
                 }
 
                 RetBE3DTestStruct.Tickers.Add(TickerName, TickerData);
 
-                // Add TickerData to TickerDataTable
-                TickerDataTable->AddRow(FName(*TickerName), TickerData);
-            }
-        }
-    }
+                DataTablesWrapper.EarningsDataTables.Add(TickerName, EarningsDataTable);
+                DataTablesWrapper.PricesDataTables.Add(TickerName, PricesDataTable);
 
-    // Process Pt13f data
-    const TSharedPtr<FJsonObject>* Pt13fDataObject;
-    if (JsonObject->TryGetObjectField(TEXT("pt_13f"), Pt13fDataObject))
-    {
-        for (const auto& IdPair : Pt13fDataObject->Get()->Values)
-        {
-            const FString IdKey = IdPair.Key;
-            const TArray<TSharedPtr<FJsonValue>>& DataArray = IdPair.Value->AsArray();
-
-            // Create a new FPt13fDataWrapper for this IdKey
-            FPt13fDataWrapper DataWrapper;
-
-            for (const auto& Item : DataArray)
-            {
-                const TSharedPtr<FJsonObject> Pt13fObject = Item->AsObject();
-                if (Pt13fObject.IsValid())
+                if (EarningsDataTable)
                 {
-                    FPt13fData Pt13fData;
-                    Pt13fData.ID = Pt13fObject->GetNumberField(TEXT("id"));
-                    Pt13fData.PubDate = Pt13fObject->GetStringField(TEXT("pubDate"));
-                    Pt13fData.LatestUpdate = Pt13fObject->GetStringField(TEXT("latestUpdate"));
-                    Pt13fData.Period = Pt13fObject->GetStringField(TEXT("period"));
-                    Pt13fData.Ticker = Pt13fObject->GetStringField(TEXT("ticker"));
-                    Pt13fData.Name = Pt13fObject->GetStringField(TEXT("name"));
-                    Pt13fData.Value = Pt13fObject->GetNumberField(TEXT("value"));
-                    Pt13fData.Amount = Pt13fObject->GetNumberField(TEXT("amount"));
-                    Pt13fData.PricePerShare = Pt13fObject->GetNumberField(TEXT("price_per_share"));
-                    Pt13fData.Percent = Pt13fObject->GetNumberField(TEXT("percent"));
-                    Pt13fData.NewOrOld = Pt13fObject->GetStringField(TEXT("neworold"));
-                    Pt13fData.Diff = Pt13fObject->GetNumberField(TEXT("diff"));
+                    if (EarningsDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("EarningsDataTable_%s"), *TickerName);
+                        EarningsDataTable->Rename(*DefaultDataTableName);
+                    }
 
-                    // Add the Pt13fData to the DataArray of DataWrapper
-                    DataWrapper.DataArray.Add(Pt13fData);
+                    FString DataTableName = EarningsDataTable->GetName();
+                    int32 RowCount = EarningsDataTable->GetRowMap().Num();
+                    UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Earnings DataTable for Ticker: %s, DataTable is null"), *TickerName);
+                }
+
+                if (PricesDataTable)
+                {
+                    if (PricesDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("PricesDataTable_%s"), *TickerName);
+                        PricesDataTable->Rename(*DefaultDataTableName);
+                    }
+
+                    FString PricesDataTableName = PricesDataTable->GetName();
+                    int32 PricesRowCount = PricesDataTable->GetRowMap().Num();
+                    UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
                 }
             }
 
-            // Ensure PT13FData is of type FPt13fDataList
-            FPt13fDataList NewPt13fDataList;
-            NewPt13fDataList.Pt13fDataMap.Add(IdKey, DataWrapper);
-
-            // Add NewPt13fDataList to PT13FData
-            RetBE3DTestStruct.PT13FData.Add(IdKey, NewPt13fDataList);
+            RetBE3DTestStruct.DataTables = DataTablesWrapper;
         }
     }
 
@@ -212,7 +252,38 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                 NewCompanyInfo.Skip = CompanyInfoObject->GetNumberField(TEXT("skip"));
                 NewCompanyInfo.CompanyKor = CompanyInfoObject->GetStringField(TEXT("companyKor"));
                 NewCompanyInfo.Nickname = CompanyInfoObject->GetStringField(TEXT("nickname"));
-                NewCompanyInfo.Intro = CompanyInfoObject->GetStringField(TEXT("intro"));
+
+                FString CompanyText = NewCompanyInfo.Company;
+
+                if (CompanyText.Len() > 20)
+                {
+                    CompanyText = CompanyText.Left(20) + TEXT("...");
+                }
+                NewCompanyInfo.Company = CompanyText;
+
+                FString IntroText = CompanyInfoObject->GetStringField(TEXT("intro"));
+
+                if (!IntroText.IsEmpty())
+                {
+                    FString FormattedIntroText;
+                    int32 CurrentLength = 0;
+
+                    for (int32 i = 0; i < IntroText.Len(); ++i)
+                    {
+                        FormattedIntroText.AppendChar(IntroText[i]);
+                        CurrentLength++;
+
+                        if (CurrentLength >= 50)
+                        {
+                            FormattedIntroText.AppendChar(TEXT('\n'));
+                            CurrentLength = 0;  
+                        }
+                    }
+
+                    UE_LOG(LogTemp, Log, TEXT("Intro Text: %s"), *FormattedIntroText);
+                    
+                    NewCompanyInfo.Intro = FormattedIntroText;
+                }
 
                 if (!RetBE3DTestStruct.CompanyInfo.Contains(NewCompanyInfo.Ticker))
                 {
@@ -232,61 +303,6 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
     bOutSuccess = true;
     OutInfoMessage = FString::Printf(TEXT("Read Struct Json Succeeded - '%s'"), *JsonFilePath);
     return RetBE3DTestStruct;
-}
-
-// Function to save DataTable as an asset
-void UReadWriteJson::SaveDataTableToAsset(UDataTable* DataTable, FString Path)
-{
-    if (!DataTable)
-    {
-        UE_LOG(LogTemp, Error, TEXT("DataTable is null. Cannot save."));
-        return;
-    }
-
-    // Create an Asset Reference
-    FStringAssetReference AssetRef(Path);
-    UObject* Asset = Cast<UObject>(StaticLoadObject(UObject::StaticClass(), nullptr, *AssetRef.ToString()));
-    UPackage* Package = nullptr;
-
-    // Check if the asset already exists
-    if (Asset)
-    {
-        Package = Asset->GetOutermost();
-    }
-    else
-    {
-        // Create a new package if it does not exist
-        Package = CreatePackage(*Path);
-        if (!Package || Package->IsUnreachable())
-        {
-            UE_LOG(LogTemp, Error, TEXT("Package is invalid or unreachable: %s"), *Path);
-            return;
-        }
-
-    }
-
-    // Mark the DataTable as created and dirty
-    FAssetRegistryModule::AssetCreated(DataTable);
-    DataTable->MarkPackageDirty();
-
-    // Check if the package name is valid
-    if (FPackageName::IsValidLongPackageName(Path))
-    {
-        // Convert path to filename
-        FString Filename = FPackageName::LongPackageNameToFilename(Path, TEXT(".uasset"));
-
-        // Save the package
-        const bool bSuccess = UPackage::SavePackage(Package, DataTable, EObjectFlags::RF_Public | EObjectFlags::RF_Standalone, *Filename);
-
-        if (!bSuccess)
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to save package for path: %s"), *Path);
-        }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid package name: %s"), *Path);
-    }
 }
 
 
