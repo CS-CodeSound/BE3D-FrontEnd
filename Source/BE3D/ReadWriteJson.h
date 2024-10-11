@@ -43,19 +43,10 @@ struct FEarningsData : public FTableRowBase
     int32 Day;
 
     UPROPERTY(BlueprintReadWrite)
-    double AdjustedClose;  // Stock price by the quarter
+    FString EPS;
 
     UPROPERTY(BlueprintReadWrite)
-    float DividendAmount;  // Dividend by the quarter
-
-    UPROPERTY(BlueprintReadWrite)
-    bool GuruHolding;  // Guru holding status
-
-    UPROPERTY(BlueprintReadWrite)
-    FString EPS;  // Earnings per share
-
-    UPROPERTY(BlueprintReadWrite)
-    FString Revenue;  // Revenue
+    FString Revenue; 
 };
 
 USTRUCT(BlueprintType)
@@ -116,6 +107,37 @@ struct FPriceData : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
+struct FIndicateData : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Year;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Month;
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 Day;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    double AdjustedClose = 0.0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    float PER = 0.0f;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    float YoY = 0.0f;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    bool GuruHolding;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    float DividendAmount = 0.0f;
+};
+
+
+USTRUCT(BlueprintType)
 struct FTickerData : public FTableRowBase
 {
     GENERATED_BODY()
@@ -129,77 +151,25 @@ struct FTickerData : public FTableRowBase
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     TArray<FPriceData> Prices;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    TArray<FIndicateData> Indicate;
 };
 
 USTRUCT(BlueprintType)
 struct FGuruPortfolioData
 {
     GENERATED_BODY()
+    
+    UPROPERTY(BlueprintReadWrite)
+    int32 Year;
 
-    // To be filled later when the data is defined
+    UPROPERTY(BlueprintReadWrite)
+    int32 Quarter;
+
+    UPROPERTY(BlueprintReadWrite)
+    double Profit;
 };
-
-/*
-USTRUCT(BlueprintType)
-struct FPtListData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 ID = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Benchmark = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Balance = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Cash = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float YRAvg = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MDD = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Dur = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float StDev = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MonthProfit = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float YearProfit = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 YRAvgRank = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MonthRank = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 YearRank = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float SharpeRatio = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 SharpeRatioRank = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float YRSharpeRatio = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 YRSharpeRatioRank = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Cnt13f = 0;
-};
-*/
 
 USTRUCT(BlueprintType)
 struct FCompanyInfo : public FTableRowBase
@@ -256,6 +226,9 @@ struct FDataTablesWrapper : public FTableRowBase
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     TMap<FString, UDataTable*> PricesDataTables;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    TMap<FString, UDataTable*> IndicateDataTables;
 };
 
 // 최종 구조체 정의
@@ -310,6 +283,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "BE3D - Read Write Json")
     static void WriteStructToJsonFile(FString JsonFilePath, FBE3DTestStruct Struct, bool& bOutSuccess, FString& OutInfoMessage);
 
+    FBE3DTestStruct ParseJsonToStruct(TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);
 
 public:
 
@@ -341,6 +315,9 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
     TMap<FString, UDataTable*> PricesDataTables;
 
+    UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
+    TMap<FString, UDataTable*> IndicateDatatables;
+
     UFUNCTION(BlueprintCallable, Category = "DataTable")
     void SetEarningsDataTable(const FString& TickerName, UDataTable* NewDataTable)
     {
@@ -366,6 +343,20 @@ public:
         else
         {
             UE_LOG(LogTemp, Warning, TEXT("Failed to set Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
+        }
+    }
+
+    UFUNCTION(BlueprintCallable, Category = "DataTable")
+    void SetIndicateDataTable(const FString& TickerName, UDataTable* NewDataTable)
+    {
+        if (NewDataTable != nullptr)
+        {
+            PricesDataTables.Add(TickerName, NewDataTable);
+            UE_LOG(LogTemp, Log, TEXT("Set Indicate DataTable for Ticker: %s"), *TickerName);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to set Indicate DataTable for Ticker: %s, DataTable is null"), *TickerName);
         }
     }
 

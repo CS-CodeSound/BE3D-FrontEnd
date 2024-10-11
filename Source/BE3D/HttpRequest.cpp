@@ -3,16 +3,18 @@
 
 #include "HttpRequest.h"
 
-void UHttpRequest::SendGetRequest(const FString& Url)
+void UHttpRequest::SendGetRequest(const FString& StartDate, const FString& EndDate, int32 Guru)
 {
     // Http 모듈 가져오기
     FHttpModule* Http = &FHttpModule::Get();
+    const FString& BaseUrl = "http://localhost:3000/data";
 
     // Http 요청 생성
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
     Request->OnProcessRequestComplete().BindUObject(this, &UHttpRequest::OnResponseReceived);
 
-    // URL 설정
+    // URL 조합
+    FString Url = FString::Printf(TEXT("%s?startdate=%s&enddate=%s&guru=%d"), *BaseUrl, *StartDate, *EndDate, Guru);
     Request->SetURL(Url);
 
     // GET 방식 설정
@@ -48,19 +50,22 @@ void UHttpRequest::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr 
         bool bOutSuccess;
         FString OutInfoMessage;
 
-        // 메모리에 저장된 JsonObject를 바로 넘기기
-
         // ReadStructFromJsonFile 호출
         UReadWriteJson* ReadWriteJson = UReadWriteJson::GetInstance(); // Singleton
-        FBE3DTestStruct ParsedData = ReadWriteJson->ReadStructFromJsonFile(TEXT(""), bOutSuccess, OutInfoMessage);
-
-        if (bOutSuccess)
+        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
         {
-            UE_LOG(LogTemp, Log, TEXT("Data Struct Successfully Created from JSON: %s"), *OutInfoMessage);
+            FBE3DTestStruct ParsedStruct = ReadWriteJson->ParseJsonToStruct(JsonObject, bOutSuccess, OutInfoMessage);
+            if (!bOutSuccess)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to parse JSON: %s"), *OutInfoMessage);
+                return;
+            }
+            // 성공적으로 파싱한 데이터 구조 사용 가능
+            UE_LOG(LogTemp, Log, TEXT("Parsed JSON Successfully!"));
         }
         else
         {
-            UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON into Struct: %s"), *OutInfoMessage);
+            UE_LOG(LogTemp, Warning, TEXT("Failed to deserialize JSON response."));
         }
     }
     else
