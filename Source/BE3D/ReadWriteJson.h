@@ -133,6 +133,9 @@ struct FIndicateData : public FTableRowBase
     bool GuruHolding;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
+    float DividendAmountYear = 0.0f;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     float DividendAmount = 0.0f;
 };
 
@@ -244,7 +247,7 @@ struct FBE3DTestStruct : public FTableRowBase
 	TMap<FString, FTickerData> Tickers;  // Ticker names mapping to earnings, ratings, and price data
 
 	UPROPERTY(BlueprintReadWrite)
-	FGuruPortfolioData GuruPortfolio;  // Placeholder for Guru Portfolio information
+	TArray<FGuruPortfolioData> GuruPortfolio;  // Placeholder for Guru Portfolio information
 
 	UPROPERTY(BlueprintReadWrite)
     TMap<FString, FCompanyInfo> CompanyInfo;  // List of company information

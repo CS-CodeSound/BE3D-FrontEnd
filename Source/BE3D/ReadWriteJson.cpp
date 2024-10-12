@@ -205,6 +205,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         IndicateData.PER = IndicateObject->GetNumberField(TEXT("per"));
                         IndicateData.YoY = IndicateObject->GetNumberField(TEXT("yoy"));
                         IndicateData.GuruHolding = IndicateObject->GetBoolField(TEXT("guru_holding"));
+                        IndicateData.DividendAmountYear = IndicateObject->GetNumberField(TEXT("dividend_amount_year"));
                         IndicateData.DividendAmount = IndicateObject->GetNumberField(TEXT("dividend_amount"));
 
                         TickerData.Indicate.Add(IndicateData);
@@ -639,7 +640,26 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
         }
     }
 
-    // Process company info and add to DataTable
+    // Process Guru Portfolio
+    const TArray<TSharedPtr<FJsonValue>>* GuruPortfolioArray;
+    if (JsonObject->TryGetArrayField(TEXT("guru_porfolio"), GuruPortfolioArray))
+    {
+        for (const auto& Item : *GuruPortfolioArray)
+        {
+            const TSharedPtr<FJsonObject> GuruPortfolioObject = Item->AsObject();
+            if (GuruPortfolioObject.IsValid())
+            {
+                FGuruPortfolioData NewGuruPortfolio;
+                NewGuruPortfolio.Year = GuruPortfolioObject->GetNumberField(TEXT("year"));
+                NewGuruPortfolio.Quarter = GuruPortfolioObject->GetNumberField(TEXT("quarter"));
+                NewGuruPortfolio.Profit = GuruPortfolioObject->GetNumberField(TEXT("profit"));
+
+                RetBE3DTestStruct.GuruPortfolio.Add(NewGuruPortfolio);
+            }
+        }
+    }
+
+    // Process company info
     const TArray<TSharedPtr<FJsonValue>>* CompanyInfoArray;
     if (JsonObject->TryGetArrayField(TEXT("us_company_info"), CompanyInfoArray))
     {
