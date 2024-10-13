@@ -18,7 +18,7 @@ class BE3D_API UHttpRequest : public UObject
 	GENERATED_BODY()
 	
 public:
-	void SendGetRequest(const FString& Url);
+	void SendGetRequest(const FString& StartDate, const FString& EndDate, int32 Guru);
 
 private:
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
