@@ -125,8 +125,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                             EarningsDataTable->AddRow(RowName, EarningsData);
                         }
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"),
-                            *TickerName, *DateString, *EarningsData.EPS, *EarningsData.Revenue);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"), *TickerName, *DateString, *EarningsData.EPS, *EarningsData.Revenue);
                     }
                 }
 
@@ -185,8 +184,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                         PricesDataTable->AddRow(RowName, PriceData);
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"),
-                            *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
                 }
 
@@ -205,7 +203,6 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         IndicateData.PER = IndicateObject->GetNumberField(TEXT("per"));
                         IndicateData.YoY = IndicateObject->GetNumberField(TEXT("yoy"));
                         IndicateData.GuruHolding = IndicateObject->GetBoolField(TEXT("guru_holding"));
-                        IndicateData.DividendAmountYear = IndicateObject->GetNumberField(TEXT("dividend_amount_year"));
                         IndicateData.DividendAmount = IndicateObject->GetNumberField(TEXT("dividend_amount"));
 
                         TickerData.Indicate.Add(IndicateData);
@@ -215,8 +212,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                         IndicateDataTable->AddRow(RowName, IndicateData);
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Indicate Data for Ticker: %s, Date: %s, Adjusted Close: %f, PER: %f, YoY: %f, Dividend Amount: %f"),
-                            *TickerName, *DateString, IndicateData.AdjustedClose, IndicateData.PER, IndicateData.YoY, IndicateData.DividendAmount);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Indicate Data for Ticker: %s, Date: %s, Adjusted Close: %f, PER: %f, YoY: %f, Dividend Amount: %f"), *TickerName, *DateString, IndicateData.AdjustedClose, IndicateData.PER, IndicateData.YoY, IndicateData.DividendAmount);
                     }
                 }
 
@@ -236,7 +232,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                     FString DataTableName = EarningsDataTable->GetName();
                     int32 RowCount = EarningsDataTable->GetRowMap().Num();
-                    UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
                 }
                 else
                 {
@@ -253,7 +249,24 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                     FString PricesDataTableName = PricesDataTable->GetName();
                     int32 PricesRowCount = PricesDataTable->GetRowMap().Num();
-                    UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
+                }
+
+                if (IndicateDataTable)
+                {
+                    if (IndicateDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("IndicateDataTable_%s"), *TickerName);
+                        IndicateDataTable->Rename(*DefaultDataTableName);
+                    }
+
+                    FString DataTableName = IndicateDataTable->GetName();
+                    int32 RowCount = IndicateDataTable->GetRowMap().Num();
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
                 }
                 else
                 {
@@ -265,7 +278,29 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
         }
     }
 
-    // Process company info and add to DataTable
+    // Process Guru Portfolio
+    const TArray<TSharedPtr<FJsonValue>>* GuruPortfolioArray;
+    if (JsonObject->TryGetArrayField(TEXT("guru_portfolio"), GuruPortfolioArray))
+    {
+        for (const auto& Item : *GuruPortfolioArray)
+        {
+            const TSharedPtr<FJsonObject> GuruPortfolioObject = Item->AsObject();
+            if (GuruPortfolioObject.IsValid())
+            {
+                FGuruPortfolioData NewGuruPortfolio;
+                NewGuruPortfolio.Year = GuruPortfolioObject->GetNumberField(TEXT("year"));
+                NewGuruPortfolio.Quarter = GuruPortfolioObject->GetNumberField(TEXT("quarter"));
+                NewGuruPortfolio.Profit = GuruPortfolioObject->GetNumberField(TEXT("profit"));
+
+                RetBE3DTestStruct.GuruPortfolio.Add(NewGuruPortfolio);
+
+                UE_LOG(LogTemp, Log, TEXT("Guru Portfolio Data - Year: %d, Quarter: %d, Profit: %f"),
+                    NewGuruPortfolio.Year, NewGuruPortfolio.Quarter, NewGuruPortfolio.Profit);
+            }
+        }
+    }
+
+    // Process company info
     const TArray<TSharedPtr<FJsonValue>>* CompanyInfoArray;
     if (JsonObject->TryGetArrayField(TEXT("us_company_info"), CompanyInfoArray))
     {
@@ -308,12 +343,12 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         if (CurrentLength >= 50)
                         {
                             FormattedIntroText.AppendChar(TEXT('\n'));
-                            CurrentLength = 0;  
+                            CurrentLength = 0;
                         }
                     }
 
                     UE_LOG(LogTemp, Log, TEXT("Intro Text: %s"), *FormattedIntroText);
-                    
+
                     NewCompanyInfo.Intro = FormattedIntroText;
                 }
 
@@ -501,8 +536,7 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
                             EarningsDataTable->AddRow(RowName, EarningsData);
                         }
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"),
-                            *TickerName, *DateString, *EarningsData.EPS, *EarningsData.Revenue);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Earnings Data for Ticker:%s, Date: %s, EPS: %s, Revenue: %s"), *TickerName, *DateString, *EarningsData.EPS, *EarningsData.Revenue);
                     }
                 }
 
@@ -561,8 +595,7 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
 
                         PricesDataTable->AddRow(RowName, PriceData);
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"),
-                            *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
                 }
 
@@ -590,8 +623,7 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
 
                         IndicateDataTable->AddRow(RowName, IndicateData);
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Indicate Data for Ticker: %s, Date: %s, Adjusted Close: %f, PER: %f, YoY: %f, Dividend Amount: %f"),
-                            *TickerName, *DateString, IndicateData.AdjustedClose, IndicateData.PER, IndicateData.YoY, IndicateData.DividendAmount);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Indicate Data for Ticker: %s, Date: %s, Adjusted Close: %f, PER: %f, YoY: %f, Dividend Amount: %f"), *TickerName, *DateString, IndicateData.AdjustedClose, IndicateData.PER, IndicateData.YoY, IndicateData.DividendAmount);
                     }
                 }
 
@@ -611,7 +643,7 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
 
                     FString DataTableName = EarningsDataTable->GetName();
                     int32 RowCount = EarningsDataTable->GetRowMap().Num();
-                    UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Earnings DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *DataTableName, RowCount);
                 }
                 else
                 {
@@ -628,7 +660,24 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
 
                     FString PricesDataTableName = PricesDataTable->GetName();
                     int32 PricesRowCount = PricesDataTable->GetRowMap().Num();
-                    UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Failed to add Prices DataTable for Ticker: %s, DataTable is null"), *TickerName);
+                }
+
+                if (IndicateDataTable)
+                {
+                    if (IndicateDataTable->GetName().IsEmpty())
+                    {
+                        FString DefaultDataTableName = FString::Printf(TEXT("IndicateDataTable_%s"), *TickerName);
+                        IndicateDataTable->Rename(*DefaultDataTableName);
+                    }
+
+                    FString DataTableName = IndicateDataTable->GetName();
+                    int32 RowCount = IndicateDataTable->GetRowMap().Num();
+                    // UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
                 }
                 else
                 {
@@ -642,7 +691,7 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
 
     // Process Guru Portfolio
     const TArray<TSharedPtr<FJsonValue>>* GuruPortfolioArray;
-    if (JsonObject->TryGetArrayField(TEXT("guru_porfolio"), GuruPortfolioArray))
+    if (JsonObject->TryGetArrayField(TEXT("guru_portfolio"), GuruPortfolioArray))
     {
         for (const auto& Item : *GuruPortfolioArray)
         {
@@ -655,6 +704,9 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
                 NewGuruPortfolio.Profit = GuruPortfolioObject->GetNumberField(TEXT("profit"));
 
                 RetBE3DTestStruct.GuruPortfolio.Add(NewGuruPortfolio);
+
+                UE_LOG(LogTemp, Log, TEXT("Guru Portfolio Data - Year: %d, Quarter: %d, Profit: %f"),
+                    NewGuruPortfolio.Year, NewGuruPortfolio.Quarter, NewGuruPortfolio.Profit);
             }
         }
     }

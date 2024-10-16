@@ -3,6 +3,8 @@
 
 #include "HttpRequest.h"
 
+UHttpRequest* UHttpRequest::SingletonInstance = nullptr;
+
 void UHttpRequest::SendGetRequest(const FString& StartDate, const FString& EndDate, int32 Guru)
 {
     // Http 모듈 가져오기
