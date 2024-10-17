@@ -7,6 +7,7 @@ UHttpRequest* UHttpRequest::SingletonInstance = nullptr;
 
 void UHttpRequest::SendGetRequest(const FString& StartDate, const FString& EndDate, int32 Guru)
 {
+
     // Http 모듈 가져오기
     FHttpModule* Http = &FHttpModule::Get();
     const FString& BaseUrl = "http://localhost:3000/data";
@@ -24,6 +25,7 @@ void UHttpRequest::SendGetRequest(const FString& StartDate, const FString& EndDa
 
     // 요청 전송
     Request->ProcessRequest();
+
 }
 
 void UHttpRequest::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
@@ -54,9 +56,9 @@ void UHttpRequest::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr 
 
         // ReadStructFromJsonFile 호출
         UReadWriteJson* ReadWriteJson = UReadWriteJson::GetInstance(); // Singleton
-        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+        if (JsonObject.IsValid())
         {
-            FBE3DTestStruct ParsedStruct = ReadWriteJson->ParseJsonToStruct(JsonObject, bOutSuccess, OutInfoMessage);
+            BE3DStruct = ReadWriteJson->ParseJsonToStruct(JsonObject, bOutSuccess, OutInfoMessage);
             if (!bOutSuccess)
             {
                 UE_LOG(LogTemp, Warning, TEXT("Failed to parse JSON: %s"), *OutInfoMessage);

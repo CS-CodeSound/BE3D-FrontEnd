@@ -9,6 +9,7 @@
 #include "UObject/NoExportTypes.h"
 #include "HttpRequest.generated.h"
 
+
 /**
  * 
  */
@@ -29,9 +30,11 @@ public:
 		return SingletonInstance;
 	}
 
-
 	UFUNCTION(BlueprintCallable, Category = "BE3D - Http Request")
 	void SendGetRequest(const FString& StartDate, const FString& EndDate, int32 Guru);
+
+	UPROPERTY(BlueprintReadOnly, Category = "BE3D - Http Request", meta = (AllowPrivateAccess = "true"))
+	FBE3DTestStruct BE3DStruct;
 
 private:
 	static UHttpRequest* SingletonInstance;
