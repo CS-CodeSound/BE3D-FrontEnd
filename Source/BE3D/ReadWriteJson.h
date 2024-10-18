@@ -112,13 +112,13 @@ struct FIndicateData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Year;
+    int32 Year = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Month;
+    int32 Month = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Day;
+    int32 Day = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     double AdjustedClose = 0.0;
@@ -165,13 +165,13 @@ struct FGuruPortfolioData
     GENERATED_BODY()
     
     UPROPERTY(BlueprintReadWrite)
-    int32 Year;
+    int32 Year = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Quarter;
+    int32 Quarter = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    double Profit;
+    double Profit = 0.0;
 };
 
 USTRUCT(BlueprintType)
