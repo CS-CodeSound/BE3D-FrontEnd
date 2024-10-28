@@ -8,7 +8,7 @@
 #include "Portfolio.generated.h"
 
 /**
- * 
+ *
  */
 
 USTRUCT(BlueprintType)
@@ -22,8 +22,8 @@ struct FStockData
 UCLASS()
 class BE3D_API UPortfolio : public UObject
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 private:
     TArray<UPurchasedStock*> Holdings;
     int Year;
@@ -34,7 +34,7 @@ public:
     UPortfolio();
 
     UFUNCTION(BlueprintCallable)
-    void InitializePortfolio(const TArray<FStockData>& StockDataArray, double TotalMoney, int StartYear, int StartMonth, int StartDay);
+    void InitializePortfolio(const TMap<FString, float>& StockPriceMap, const TMap<FString, float>& StockPercentMap, double TotalMoney, int StartYear, int StartMonth, int StartDay);
 
     UFUNCTION(BlueprintCallable)
     float SellAllStocks(int NowYear, int NowMonth, int NowDay);

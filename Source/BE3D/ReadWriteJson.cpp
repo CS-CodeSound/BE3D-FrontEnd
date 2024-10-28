@@ -9,6 +9,8 @@
 
 UReadWriteJson* UReadWriteJson::Instance = nullptr;
 
+TMap<FString, TArray<FPriceData>> UReadWriteJson::PricesData;
+
 UReadWriteJson* UReadWriteJson::GetInstance()
 {
     if (Instance == nullptr)
@@ -596,6 +598,8 @@ FBE3DTestStruct UReadWriteJson::ParseJsonToStruct(TSharedPtr<FJsonObject> JsonOb
                         PricesDataTable->AddRow(RowName, PriceData);
 
                         // UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
+
+                        PricesData[TickerName].Add(PriceData);
                     }
                 }
 

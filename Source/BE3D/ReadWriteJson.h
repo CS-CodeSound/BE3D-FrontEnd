@@ -46,7 +46,7 @@ struct FEarningsData : public FTableRowBase
     FString EPS;
 
     UPROPERTY(BlueprintReadWrite)
-    FString Revenue; 
+    FString Revenue;
 };
 
 USTRUCT(BlueprintType)
@@ -163,7 +163,7 @@ USTRUCT(BlueprintType)
 struct FGuruPortfolioData
 {
     GENERATED_BODY()
-    
+
     UPROPERTY(BlueprintReadWrite)
     int32 Year = 0;
 
@@ -241,15 +241,15 @@ struct FBE3DTestStruct : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-	TMap<FString, FCategoryDataList> Categories;  // Category names mapping to a list of tickers, years, and quarters
+    TMap<FString, FCategoryDataList> Categories;  // Category names mapping to a list of tickers, years, and quarters
 
-	UPROPERTY(BlueprintReadWrite)
-	TMap<FString, FTickerData> Tickers;  // Ticker names mapping to earnings, ratings, and price data
+    UPROPERTY(BlueprintReadWrite)
+    TMap<FString, FTickerData> Tickers;  // Ticker names mapping to earnings, ratings, and price data
 
-	UPROPERTY(BlueprintReadWrite)
-	TArray<FGuruPortfolioData> GuruPortfolio;  // Placeholder for Guru Portfolio information
+    UPROPERTY(BlueprintReadWrite)
+    TArray<FGuruPortfolioData> GuruPortfolio;  // Placeholder for Guru Portfolio information
 
-	UPROPERTY(BlueprintReadWrite)
+    UPROPERTY(BlueprintReadWrite)
     TMap<FString, FCompanyInfo> CompanyInfo;  // List of company information
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
@@ -311,6 +311,7 @@ public:
      */
     static void WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);
 
+    static TMap<FString, TArray<FPriceData>> PricesData;
 
     UPROPERTY(BlueprintReadOnly, Category = "DataTable", meta = (AllowPrivateAccess = "true"))
     TMap<FString, UDataTable*> EarningsDataTables;

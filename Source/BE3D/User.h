@@ -8,15 +8,15 @@
 #include "User.generated.h"
 
 /**
- * 
+ *
  */
 
 
 UCLASS()
 class BE3D_API UUser : public UObject
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 private:
     float Cash;
     UPortfolio* UserPortfolio;
@@ -24,8 +24,20 @@ private:
     int Month;
     int Day;
 
+    static UUser* Instance;
+
 public:
     UUser();
+
+    UFUNCTION(BlueprintCallable, Category = "User")
+    static UUser* GetInstance() {
+        if (!Instance)
+        {
+            Instance = NewObject<UUser>();
+            Instance->AddToRoot(); // GC에 의해 수집되지 않도록 고정
+        }
+        return Instance;
+    }
 
     // Initialize the user with initial cash and date
     UFUNCTION(BlueprintCallable, Category = "User")
@@ -33,7 +45,7 @@ public:
 
     // Create Portfolio from stock data
     UFUNCTION(BlueprintCallable, Category = "User")
-    void CreateUserPortfolio(const TArray<FStockData>& StockDataArray);
+    void CreateUserPortfolio(const TMap<FString, float>& StockPriceMap, const TMap<FString, float>& StockPercentMap);
 
     // Sell all stocks in Portfolio
     UFUNCTION(BlueprintCallable, Category = "User")
@@ -64,4 +76,8 @@ public:
     // Update date
     UFUNCTION(BlueprintCallable, Category = "User")
     void UpdateDate(int NewYear, int NewMonth, int NewDay);
+
+
+    UFUNCTION(BlueprintCallable, Category = "Stock Management")
+    void UpdateStockPercentages(const TArray<FString>& cardstobuy, TMap<FString, float>& StockPercentages);
 };

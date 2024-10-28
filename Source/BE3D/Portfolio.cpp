@@ -7,27 +7,27 @@ UPortfolio::UPortfolio()
 {
 }
 
-void UPortfolio::InitializePortfolio(const TArray<FStockData>& StockDataArray, double TotalMoney, int StartYear, int StartMonth, int StartDay)
+void UPortfolio::InitializePortfolio(const TMap<FString, float>& StockPriceMap, const TMap<FString, float>& StockPercentMap, double TotalMoney, int StartYear, int StartMonth, int StartDay)
 {
     Year = StartYear;
     Month = StartMonth;
     Day = StartDay;
 
     // Create UStock objects for each TMap entry
-    for (const auto& StockData : StockDataArray)
+    for (const auto& Elem : StockPriceMap)
     {
-        // Access the TMap inside FStockData
-        for (const auto& Elem : StockData.StockMap)
-        {
-            FString Ticker = Elem.Key;
-            float Percent = Elem.Value;
+        FString Ticker = Elem.Key;
+        float Price = Elem.Value;
 
-            UPurchasedStock* Stock = NewObject<UPurchasedStock>(this);
-            if (Stock)
-            {
-                Stock->InitializeStock(Ticker, TotalMoney, Percent, StartYear, StartMonth, StartDay);
-                Holdings.Add(Stock);
-            }
+        const float* PercentPtr = StockPercentMap.Find(Ticker);
+        float Percent = (PercentPtr != nullptr) ? *PercentPtr : 0.0f;
+
+        // 林侥 按眉 积己
+        UPurchasedStock* Stock = NewObject<UPurchasedStock>(this);
+        if (Stock)
+        {
+            Stock->InitializeStock(Ticker, Price, TotalMoney, Percent, StartYear, StartMonth, StartDay);
+            Holdings.Add(Stock);
         }
     }
 }

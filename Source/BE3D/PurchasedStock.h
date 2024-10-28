@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "ReadWriteJson.h"
 #include "PurchasedStock.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class BE3D_API UPurchasedStock : public UObject
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 private:
     FString Ticker;
     float Price;
@@ -27,7 +28,7 @@ public:
     UPurchasedStock();
 
     UFUNCTION(BlueprintCallable)
-    void InitializeStock(const FString& Ticker, float Money, float Percent, int Year, int Month, int Day);
+    void InitializeStock(const FString& Ticker, float InPrice, float Money, float Percent, int Year, int Month, int Day);
 
     UFUNCTION(BlueprintCallable)
     float CalculateDividend(int SellYear, int SellMonth, int SellDay);
