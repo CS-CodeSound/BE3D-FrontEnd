@@ -11,6 +11,7 @@ UReadWriteJson* UReadWriteJson::Instance = nullptr;
 
 TMap<FString, TArray<FPriceData>> UReadWriteJson::PricesData;
 
+
 UReadWriteJson* UReadWriteJson::GetInstance()
 {
     if (Instance == nullptr)
@@ -166,6 +167,10 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         PriceData.Month = PriceObject->GetNumberField(TEXT("month"));
                         PriceData.Day = PriceObject->GetNumberField(TEXT("day"));
 
+                        PriceData.AdjustedClose = PriceObject->GetNumberField(TEXT("adjusted_close"));
+                        PriceData.DividendAmount = PriceObject->GetNumberField(TEXT("dividend_amount"));
+
+                        /*
                         // Ensure AdjustedClose field exists and is valid (double)
                         if (PriceObject->HasField(TEXT("adjusted_close")))
                         {
@@ -177,6 +182,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         {
                             PriceData.DividendAmount = PriceObject->GetNumberField(TEXT("dividend_amount"));
                         }
+                        */
 
                         TickerData.Prices.Add(PriceData);
 
@@ -186,8 +192,9 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                         PricesDataTable->AddRow(RowName, PriceData);
 
-                        // UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
+                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
+
                 }
 
                 // Process indicate data
@@ -202,8 +209,8 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         IndicateData.Month = IndicateObject->GetNumberField(TEXT("month"));
                         IndicateData.Day = IndicateObject->GetNumberField(TEXT("day"));
                         IndicateData.AdjustedClose = IndicateObject->GetNumberField(TEXT("adjusted_close"));
-                        IndicateData.PER = IndicateObject->GetNumberField(TEXT("per"));
-                        IndicateData.YoY = IndicateObject->GetNumberField(TEXT("yoy"));
+                        IndicateData.PER = IndicateObject->GetNumberField(TEXT("PER"));
+                        IndicateData.YoY = IndicateObject->GetNumberField(TEXT("YoY"));
                         IndicateData.GuruHolding = IndicateObject->GetBoolField(TEXT("guru_holding"));
                         IndicateData.DividendAmount = IndicateObject->GetNumberField(TEXT("dividend_amount"));
 
@@ -251,7 +258,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                     FString PricesDataTableName = PricesDataTable->GetName();
                     int32 PricesRowCount = PricesDataTable->GetRowMap().Num();
-                    // UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
+                    UE_LOG(LogTemp, Warning, TEXT("Added Prices DataTable for Ticker: %s, DataTable Name: %s, Row Count: %d"), *TickerName, *PricesDataTableName, PricesRowCount);
                 }
                 else
                 {
@@ -349,7 +356,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         }
                     }
 
-                    UE_LOG(LogTemp, Log, TEXT("Intro Text: %s"), *FormattedIntroText);
+                    // UE_LOG(LogTemp, Log, TEXT("Intro Text: %s"), *FormattedIntroText);
 
                     NewCompanyInfo.Intro = FormattedIntroText;
                 }
@@ -360,7 +367,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                 }
                 else
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("Duplicate Ticker found: %s. Updating existing entry."), *NewCompanyInfo.Ticker);
+                    // UE_LOG(LogTemp, Warning, TEXT("Duplicate Ticker found: %s. Updating existing entry."), *NewCompanyInfo.Ticker);
                     RetBE3DTestStruct.CompanyInfo[NewCompanyInfo.Ticker] = NewCompanyInfo;
                 }
                 // Add CompanyInfo to CompanyInfoDataTable

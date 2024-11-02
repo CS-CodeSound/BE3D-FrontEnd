@@ -34,13 +34,13 @@ struct FEarningsData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Year;
+    int32 Year = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Month;
+    int32 Month = 0; 
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Day;
+    int32 Day = 0;
 
     UPROPERTY(BlueprintReadWrite)
     FString EPS;
@@ -55,13 +55,13 @@ struct FRatingData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Year;
+    int32 Year = 0; // Initialize to 0 or a suitable default value
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Month;
+    int32 Month = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Day;
+    int32 Day = 0; 
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     FString Analyst;
@@ -91,13 +91,13 @@ struct FPriceData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Year;
+    int32 Year = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Month;
+    int32 Month = 0;
 
     UPROPERTY(BlueprintReadWrite)
-    int32 Day;
+    int32 Day = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     double AdjustedClose = 0.0;
@@ -255,7 +255,6 @@ struct FBE3DTestStruct : public FTableRowBase
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BE3D")
     FDataTablesWrapper DataTables;
 };
-
 
 
 UCLASS()
