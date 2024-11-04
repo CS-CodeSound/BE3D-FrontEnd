@@ -114,7 +114,14 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
                         EarningsData.Month = EarningsObject->GetNumberField(TEXT("month"));
                         EarningsData.Day = EarningsObject->GetNumberField(TEXT("day"));
                         EarningsData.EPS = EarningsObject->GetStringField(TEXT("eps"));
-                        EarningsData.Revenue = EarningsObject->GetStringField(TEXT("revenue"));
+                        if (EarningsObject->HasField(TEXT("revenue")) && !EarningsObject->HasTypedField<EJson::Null>(TEXT("revenue")))
+                        {
+                            EarningsData.Revenue = EarningsObject->GetStringField(TEXT("revenue"));
+                        }
+                        else
+                        {
+                            EarningsData.Revenue = TEXT("0");
+                        }
 
                         TickerData.Earnings.Add(EarningsData);
 
