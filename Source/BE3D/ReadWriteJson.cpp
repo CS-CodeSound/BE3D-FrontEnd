@@ -199,7 +199,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                         PricesDataTable->AddRow(RowName, PriceData);
 
-                        UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
+                        // UE_LOG(LogTemp, Log, TEXT("Added Prices Data for Ticker: %s, Date: %s, Adjusted Close: %f, Dividend Amount: %f"), *TickerName, *DateString, PriceData.AdjustedClose, PriceData.DividendAmount);
                     }
 
                 }
@@ -310,8 +310,7 @@ FBE3DTestStruct UReadWriteJson::ReadStructFromJsonFile(FString JsonFilePath, boo
 
                 RetBE3DTestStruct.GuruPortfolio.Add(NewGuruPortfolio);
 
-                UE_LOG(LogTemp, Log, TEXT("Guru Portfolio Data - Year: %d, Quarter: %d, Profit: %f"),
-                    NewGuruPortfolio.Year, NewGuruPortfolio.Quarter, NewGuruPortfolio.Profit);
+                // UE_LOG(LogTemp, Log, TEXT("Guru Portfolio Data - Year: %d, Quarter: %d, Profit: %f"), NewGuruPortfolio.Year, NewGuruPortfolio.Quarter, NewGuruPortfolio.Profit);
             }
         }
     }

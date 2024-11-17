@@ -354,7 +354,7 @@ public:
     {
         if (NewDataTable != nullptr)
         {
-            PricesDataTables.Add(TickerName, NewDataTable);
+            IndicateDatatables.Add(TickerName, NewDataTable);
             UE_LOG(LogTemp, Log, TEXT("Set Indicate DataTable for Ticker: %s"), *TickerName);
         }
         else
