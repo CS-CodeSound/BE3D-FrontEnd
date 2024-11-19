@@ -3,7 +3,6 @@
 #include "Serialization/JsonSerializer.h" // Json
 #include "Engine/DataTable.h" // Include DataTable support
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "PackageHelperFunctions.h" 
 
 #include "JsonObjectConverter.h" // JsonUtilities
 
