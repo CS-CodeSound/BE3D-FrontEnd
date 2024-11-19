@@ -21,6 +21,11 @@ public class BE3D : ModuleRules
             PublicDependencyModuleNames.AddRange(new string[] { "AssetTools", "UnrealEd" });
         }
 
+        if (Target.Platform == UnrealTargetPlatform.Android)
+        {
+            PrivateDependencyModuleNames.AddRange(new string[] { "Core", "UMG", "Slate", "SlateCore" });
+        }
+
         PrivateDependencyModuleNames.AddRange(new string[] { });
 
         // Uncomment if you are using Slate UI
