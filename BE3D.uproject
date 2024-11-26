@@ -47,16 +47,29 @@
 			"Enabled": true
 		},
 		{
-			"Name": "VR_UI",
+			"Name": "DataCharts",
+			"Enabled": true
+		},
+		{
+			"Name": "SimpleHMD",
 			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/d5fe7541aa6c46999af6db431ed8ed5f",
 			"SupportedTargetPlatforms": [
-				"Win64"
+				"Win64",
+				"Linux",
+				"Android",
+				"Mac",
+				"IOS",
+				"VisionOS"
 			]
 		},
 		{
-			"Name": "DataCharts",
-			"Enabled": true
+			"Name": "OculusXR",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/8313d8d7e7cf4e03a33e79eb757bccba",
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Android"
+			]
 		}
 	],
 	"TargetPlatforms": [

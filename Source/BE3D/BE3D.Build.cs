@@ -12,7 +12,7 @@ public class BE3D : ModuleRules
             "Core", "CoreUObject", "Engine", "InputCore",
             "Json", "JsonUtilities",
             "AssetRegistry",
-            "HTTP"
+            "HTTP", "OculusXRHMD"
         });
 
         // 에디터 전용 모듈은 에디터 빌드에만 포함
